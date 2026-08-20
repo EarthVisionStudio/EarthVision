@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import Globe from 'react-globe.gl'
 import './index.css'
 import InfoPanel from './components/InfoPanel'
+import Header from './components/Header'
 
 function App() {
   const globeRef = useRef()
@@ -217,35 +218,7 @@ const [weatherInfo, setWeatherInfo] = useState({
       }}
     >
       {/* HEADER */}
-      <div
-        style={{
-          position: 'absolute',
-          top: '30px',
-          left: '40px',
-          zIndex: 10,
-        }}
-      >
-        <div
-          style={{
-            fontSize: '28px',
-            fontWeight: '700',
-            letterSpacing: '3px',
-          }}
-        >
-          EARTH VISION
-        </div>
-
-        <div
-          style={{
-            marginTop: '6px',
-            color: '#7fa6c9',
-            fontSize: '14px',
-            letterSpacing: '2px',
-          }}
-        >
-          LIVE EARTH INTELLIGENCE
-        </div>
-      </div>
+      <Header />
 
 <InfoPanel
   panelVisible={panelVisible}
