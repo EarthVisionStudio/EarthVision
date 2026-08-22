@@ -4,6 +4,7 @@ function InfoPanel({
   selectedPoint,
   formatLatitude,
   formatLongitude,
+  timeInfo,
 }) {
   return (
     <div
@@ -15,20 +16,25 @@ function InfoPanel({
         width: '330px',
         padding: '22px',
         borderRadius: '16px',
-        border: '1px solid rgba(116, 188, 255, 0.28)',
-        background: 'rgba(4, 17, 31, 0.88)',
+        border:
+          '1px solid rgba(116, 188, 255, 0.28)',
+        background:
+          'rgba(4, 17, 31, 0.88)',
         backdropFilter: 'blur(12px)',
-        boxShadow: '0 15px 40px rgba(0,0,0,.35)',
+        boxShadow:
+          '0 15px 40px rgba(0, 0, 0, 0.35)',
 
         opacity: panelVisible ? 1 : 0,
+
         transform: panelVisible
           ? 'translateX(0)'
           : 'translateX(45px)',
 
-        pointerEvents: panelVisible ? 'auto' : 'none',
+        pointerEvents:
+          panelVisible ? 'auto' : 'none',
 
         transition:
-          'opacity .45s ease, transform .45s ease',
+          'opacity 0.45s ease, transform 0.45s ease',
       }}
     >
       <div
@@ -61,7 +67,8 @@ function InfoPanel({
               marginBottom: '5px',
             }}
           >
-            {locationInfo.city || 'AREA SELEZIONATA'}
+            {locationInfo.city ||
+              'AREA SELEZIONATA'}
           </div>
 
           <div
@@ -79,43 +86,91 @@ function InfoPanel({
       )}
 
       {selectedPoint && (
-        <div
-          style={{
-            paddingTop: '16px',
-            borderTop:
-              '1px solid rgba(116,188,255,.16)',
-          }}
-        >
+        <>
           <div
             style={{
-              fontSize: '11px',
-              color: '#7fa6c9',
-              letterSpacing: '1.5px',
-              marginBottom: '9px',
+              paddingTop: '16px',
+              borderTop:
+                '1px solid rgba(116, 188, 255, 0.16)',
             }}
           >
-            COORDINATE
+            <div
+              style={{
+                fontSize: '11px',
+                color: '#7fa6c9',
+                letterSpacing: '1.5px',
+                marginBottom: '9px',
+              }}
+            >
+              COORDINATE
+            </div>
+
+            <div
+              style={{
+                color: '#e1edf7',
+                fontSize: '16px',
+              }}
+            >
+              {formatLatitude(
+                selectedPoint.lat
+              )}
+            </div>
+
+            <div
+              style={{
+                color: '#e1edf7',
+                fontSize: '16px',
+                marginTop: '5px',
+              }}
+            >
+              {formatLongitude(
+                selectedPoint.lng
+              )}
+            </div>
           </div>
 
-          <div
-            style={{
-              color: '#e1edf7',
-              fontSize: '16px',
-            }}
-          >
-            {formatLatitude(selectedPoint.lat)}
-          </div>
+          {timeInfo?.localTime && (
+            <div
+              style={{
+                marginTop: '22px',
+                paddingTop: '16px',
+                borderTop:
+                  '1px solid rgba(116, 188, 255, 0.16)',
+              }}
+            >
+              <div
+                style={{
+                  fontSize: '11px',
+                  color: '#7fa6c9',
+                  letterSpacing: '1.5px',
+                  marginBottom: '9px',
+                }}
+              >
+                ORA LOCALE
+              </div>
 
-          <div
-            style={{
-              color: '#e1edf7',
-              fontSize: '16px',
-              marginTop: '5px',
-            }}
-          >
-            {formatLongitude(selectedPoint.lng)}
-          </div>
-        </div>
+              <div
+                style={{
+                  color: '#e1edf7',
+                  fontSize: '20px',
+                  fontWeight: '600',
+                }}
+              >
+                {timeInfo.localTime}
+              </div>
+
+              <div
+                style={{
+                  color: '#7fa6c9',
+                  fontSize: '13px',
+                  marginTop: '5px',
+                }}
+              >
+                {timeInfo.timezone}
+              </div>
+            </div>
+          )}
+        </>
       )}
     </div>
   )

@@ -1,31 +1,33 @@
 import { useEffect, useRef, useState } from 'react'
 import Globe from 'react-globe.gl'
 import './index.css'
-import InfoPanel from './components/InfoPanel'
+
 import Header from './components/Header'
+import InfoPanel from './components/InfoPanel'
 
 function App() {
   const globeRef = useRef()
   const restartTimerRef = useRef(null)
-  const requestRef = useRef(null)
-  const requestIdRef = useRef(0)
+
+  const locationRequestRef = useRef(null)
+  const locationRequestIdRef = useRef(0)
+
+  const timeRequestRef = useRef(null)
+  const timeRequestIdRef = useRef(0)
 
   const [selectedPoint, setSelectedPoint] = useState(null)
   const [panelVisible, setPanelVisible] = useState(false)
 
   const [locationInfo, setLocationInfo] = useState({
-  city: '',
-  country: '',
-  loading: false,
-})
+    city: '',
+    country: '',
+    loading: false,
+  })
 
-const [weatherInfo, setWeatherInfo] = useState({
-  temperature: null,
-  humidity: null,
-  windSpeed: null,
-  weatherCode: null,
-  loading: false,
-})
+  const [timeInfo, setTimeInfo] = useState({
+    localTime: '',
+    timezone: '',
+  })
 
   useEffect(() => {
     if (!globeRef.current) return
@@ -61,6 +63,11 @@ const [weatherInfo, setWeatherInfo] = useState({
           loading: false,
         })
 
+        setTimeInfo({
+          localTime: '',
+          timezone: '',
+        })
+
         controls.autoRotate = true
       }, 8000)
     }
@@ -76,8 +83,12 @@ const [weatherInfo, setWeatherInfo] = useState({
         clearTimeout(restartTimerRef.current)
       }
 
-      if (requestRef.current) {
-        requestRef.current.abort()
+      if (locationRequestRef.current) {
+        locationRequestRef.current.abort()
+      }
+
+      if (timeRequestRef.current) {
+        timeRequestRef.current.abort()
       }
     }
   }, [])
@@ -89,14 +100,14 @@ const [weatherInfo, setWeatherInfo] = useState({
     `${Math.abs(lng).toFixed(3)}° ${lng >= 0 ? 'E' : 'O'}`
 
   const findLocation = async (lat, lng) => {
-    if (requestRef.current) {
-      requestRef.current.abort()
+    if (locationRequestRef.current) {
+      locationRequestRef.current.abort()
     }
 
     const controller = new AbortController()
-    requestRef.current = controller
+    locationRequestRef.current = controller
 
-    const requestId = ++requestIdRef.current
+    const requestId = ++locationRequestIdRef.current
 
     setLocationInfo({
       city: '',
@@ -118,9 +129,7 @@ const [weatherInfo, setWeatherInfo] = useState({
 
       const data = await response.json()
 
-      // Se nel frattempo hai cliccato altrove,
-      // ignoriamo questa risposta vecchia.
-      if (requestId !== requestIdRef.current) return
+      if (requestId !== locationRequestIdRef.current) return
 
       const address = data.address || {}
 
@@ -147,7 +156,7 @@ const [weatherInfo, setWeatherInfo] = useState({
     } catch (error) {
       if (error.name === 'AbortError') return
 
-      if (requestId !== requestIdRef.current) return
+      if (requestId !== locationRequestIdRef.current) return
 
       setLocationInfo({
         city: 'Località non disponibile',
@@ -157,10 +166,75 @@ const [weatherInfo, setWeatherInfo] = useState({
     }
   }
 
-  const handleGlobeClick = ({ lat, lng }) => {
-  console.log('CLIC SUL GLOBO:', lat, lng)
+  const findLocalTime = async (lat, lng) => {
+    if (timeRequestRef.current) {
+      timeRequestRef.current.abort()
+    }
 
-  if (!globeRef.current) return
+    const controller = new AbortController()
+    timeRequestRef.current = controller
+
+    const requestId = ++timeRequestIdRef.current
+
+    setTimeInfo({
+      localTime: '',
+      timezone: '',
+    })
+
+    try {
+      const response = await fetch(
+        `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current=temperature_2m&timezone=auto`,
+        {
+          signal: controller.signal,
+        }
+      )
+
+      if (!response.ok) {
+        throw new Error('Errore nel recupero del fuso orario')
+      }
+
+      const data = await response.json()
+
+      if (requestId !== timeRequestIdRef.current) return
+
+      const timezone = data.timezone || ''
+      const timezoneAbbreviation =
+        data.timezone_abbreviation || ''
+
+      if (!timezone) {
+        throw new Error('Fuso orario non disponibile')
+      }
+
+      const localTime = new Date().toLocaleTimeString(
+        'it-IT',
+        {
+          timeZone: timezone,
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit',
+          hour12: false,
+        }
+      )
+
+      setTimeInfo({
+        localTime,
+        timezone:
+          timezoneAbbreviation || timezone,
+      })
+    } catch (error) {
+      if (error.name === 'AbortError') return
+
+      if (requestId !== timeRequestIdRef.current) return
+
+      setTimeInfo({
+        localTime: '',
+        timezone: '',
+      })
+    }
+  }
+
+  const handleGlobeClick = ({ lat, lng }) => {
+    if (!globeRef.current) return
 
     const controls = globeRef.current.controls()
 
@@ -179,6 +253,7 @@ const [weatherInfo, setWeatherInfo] = useState({
     setPanelVisible(true)
 
     findLocation(point.lat, point.lng)
+    findLocalTime(point.lat, point.lng)
 
     globeRef.current.pointOfView(
       {
@@ -199,11 +274,18 @@ const [weatherInfo, setWeatherInfo] = useState({
         loading: false,
       })
 
+      setTimeInfo({
+        localTime: '',
+        timezone: '',
+      })
+
       controls.autoRotate = true
     }, 8000)
   }
 
-  const markerData = selectedPoint ? [selectedPoint] : []
+  const markerData = selectedPoint
+    ? [selectedPoint]
+    : []
 
   return (
     <div
@@ -217,16 +299,17 @@ const [weatherInfo, setWeatherInfo] = useState({
         color: 'white',
       }}
     >
-      {/* HEADER */}
       <Header />
 
-<InfoPanel
-  panelVisible={panelVisible}
-  locationInfo={locationInfo}
-  selectedPoint={selectedPoint}
-  formatLatitude={formatLatitude}
-  formatLongitude={formatLongitude}
-/>
+      <InfoPanel
+        panelVisible={panelVisible}
+        locationInfo={locationInfo}
+        selectedPoint={selectedPoint}
+        formatLatitude={formatLatitude}
+        formatLongitude={formatLongitude}
+        timeInfo={timeInfo}
+      />
+
       <Globe
         ref={globeRef}
         width={window.innerWidth}
@@ -235,9 +318,7 @@ const [weatherInfo, setWeatherInfo] = useState({
         globeImageUrl="https://unpkg.com/three-globe/example/img/earth-night.jpg"
         atmosphereColor="#3a9dff"
         atmosphereAltitude={0.18}
-
         onGlobeClick={handleGlobeClick}
-
         pointsData={markerData}
         pointLat="lat"
         pointLng="lng"
