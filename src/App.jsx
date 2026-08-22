@@ -100,71 +100,86 @@ function App() {
     `${Math.abs(lng).toFixed(3)}° ${lng >= 0 ? 'E' : 'O'}`
 
   const findLocation = async (lat, lng) => {
-    if (locationRequestRef.current) {
-      locationRequestRef.current.abort()
+  if (locationRequestRef.current) {
+    locationRequestRef.current.abort()
+  }
+
+  const controller = new AbortController()
+  locationRequestRef.current = controller
+
+  const requestId = ++locationRequestIdRef.current
+
+  setLocationInfo({
+    city: '',
+    country: '',
+    loading: true,
+  })
+
+  const fetchLocation = async (zoom) => {
+    const response = await fetch(
+      `https://nominatim.openstreetmap.org/reverse?format=jsonv2&addressdetails=1&zoom=${zoom}&accept-language=it,en&lat=${lat}&lon=${lng}`,
+      {
+        signal: controller.signal,
+      }
+    )
+
+    if (!response.ok) {
+      throw new Error('Errore reverse geocoding')
     }
 
-    const controller = new AbortController()
-    locationRequestRef.current = controller
+    return response.json()
+  }
 
-    const requestId = ++locationRequestIdRef.current
+  try {
+    let data = await fetchLocation(10)
+
+    if (requestId !== locationRequestIdRef.current) return
+
+    let address = data.address || {}
+
+    if (data.error || !address.country) {
+      data = await fetchLocation(8)
+
+      if (requestId !== locationRequestIdRef.current) return
+
+      address = data.address || {}
+    }
+
+    const city =
+      address.city ||
+      address.town ||
+      address.village ||
+      address.municipality ||
+      address.hamlet ||
+      address.county ||
+      address.state_district ||
+      address.state ||
+      data.name ||
+      'Area non identificata'
+
+    const country =
+      address.country ||
+      'Paese non disponibile'
+
+    if (requestId !== locationRequestIdRef.current) return
 
     setLocationInfo({
-      city: '',
-      country: '',
-      loading: true,
+      city,
+      country,
+      loading: false,
     })
+  } catch (error) {
+    if (error.name === 'AbortError') return
 
-    try {
-      const response = await fetch(
-        `https://nominatim.openstreetmap.org/reverse?format=jsonv2&addressdetails=1&zoom=10&accept-language=it,en&lat=${lat}&lon=${lng}`,
-        {
-          signal: controller.signal,
-        }
-      )
+    if (requestId !== locationRequestIdRef.current) return
 
-      if (!response.ok) {
-        throw new Error('Errore reverse geocoding')
-      }
-
-      const data = await response.json()
-
-      if (requestId !== locationRequestIdRef.current) return
-
-      const address = data.address || {}
-
-      const city =
-        address.city ||
-        address.town ||
-        address.village ||
-        address.municipality ||
-        address.hamlet ||
-        address.county ||
-        address.state ||
-        data.name ||
-        'Area non identificata'
-
-      const country =
-        address.country ||
-        'Paese non disponibile'
-
-      setLocationInfo({
-        city,
-        country,
-        loading: false,
-      })
-    } catch (error) {
-      if (error.name === 'AbortError') return
-
-      if (requestId !== locationRequestIdRef.current) return
-
-      setLocationInfo({
-        city: 'Località non disponibile',
-        country: '',
-        loading: false,
-      })
-    }
+    setLocationInfo({
+      city: 'Area non identificata',
+      country: 'Paese non disponibile',
+      loading: false,
+    })
   }
+}
 
   const findLocalTime = async (lat, lng) => {
     if (timeRequestRef.current) {
