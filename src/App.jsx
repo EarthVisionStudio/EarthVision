@@ -25,9 +25,35 @@ function App() {
   })
 
   const [timeInfo, setTimeInfo] = useState({
-    localTime: '',
-    timezone: '',
-  })
+  localTime: '',
+  timezone: '',
+  timezoneId: '',
+})
+
+useEffect(() => {
+  if (!timeInfo.timezoneId) return
+
+  const updateLocalTime = () => {
+    const localTime = new Date().toLocaleTimeString('it-IT', {
+      timeZone: timeInfo.timezoneId,
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false,
+    })
+
+    setTimeInfo((current) => ({
+      ...current,
+      localTime,
+    }))
+  }
+
+  updateLocalTime()
+
+  const timer = setInterval(updateLocalTime, 1000)
+
+  return () => clearInterval(timer)
+}, [timeInfo.timezoneId])
 
   useEffect(() => {
     if (!globeRef.current) return
@@ -232,10 +258,11 @@ function App() {
       )
 
       setTimeInfo({
-        localTime,
-        timezone:
-          timezoneAbbreviation || timezone,
-      })
+  localTime,
+  timezone:
+    timezoneAbbreviation || timezone,
+  timezoneId: timezone,
+})
     } catch (error) {
       if (error.name === 'AbortError') return
 
