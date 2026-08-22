@@ -30,6 +30,14 @@ function App() {
   timezoneId: '',
 })
 
+const [weatherInfo, setWeatherInfo] = useState({
+  temperature: null,
+  humidity: null,
+  windSpeed: null,
+  weatherCode: null,
+  loading: false,
+})
+
 useEffect(() => {
   if (!timeInfo.timezoneId) return
 
@@ -275,6 +283,44 @@ useEffect(() => {
     }
   }
 
+  const findWeather = async (lat, lng) => {
+  setWeatherInfo({
+    temperature: null,
+    humidity: null,
+    windSpeed: null,
+    weatherCode: null,
+    loading: true,
+  })
+
+  try {
+    const response = await fetch(
+      `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current=temperature_2m,relative_humidity_2m,wind_speed_10m,weather_code&timezone=auto`
+    )
+
+    if (!response.ok) {
+      throw new Error('Errore meteo')
+    }
+
+    const data = await response.json()
+
+    setWeatherInfo({
+      temperature: data.current?.temperature_2m ?? null,
+      humidity: data.current?.relative_humidity_2m ?? null,
+      windSpeed: data.current?.wind_speed_10m ?? null,
+      weatherCode: data.current?.weather_code ?? null,
+      loading: false,
+    })
+  } catch (error) {
+    setWeatherInfo({
+      temperature: null,
+      humidity: null,
+      windSpeed: null,
+      weatherCode: null,
+      loading: false,
+    })
+  }
+}
+
   const handleGlobeClick = ({ lat, lng }) => {
     if (!globeRef.current) return
 
@@ -296,6 +342,7 @@ useEffect(() => {
 
     findLocation(point.lat, point.lng)
     findLocalTime(point.lat, point.lng)
+    findWeather(point.lat, point.lng)
 
     globeRef.current.pointOfView(
       {
@@ -350,6 +397,7 @@ useEffect(() => {
         formatLatitude={formatLatitude}
         formatLongitude={formatLongitude}
         timeInfo={timeInfo}
+        weatherInfo={weatherInfo}
       />
 
       <Globe

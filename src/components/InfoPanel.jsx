@@ -5,6 +5,7 @@ function InfoPanel({
   formatLatitude,
   formatLongitude,
   timeInfo,
+  weatherInfo,
 }) {
   return (
     <div
@@ -170,6 +171,51 @@ function InfoPanel({
               </div>
             </div>
           )}
+          {weatherInfo && (
+  <div
+    style={{
+      marginTop: '22px',
+      paddingTop: '16px',
+      borderTop: '1px solid rgba(116,188,255,.16)',
+    }}
+  >
+    <div
+      style={{
+        fontSize: '11px',
+        color: '#7fa6c9',
+        letterSpacing: '1.5px',
+        marginBottom: '10px',
+      }}
+    >
+      METEO ATTUALE
+    </div>
+
+    {weatherInfo.loading ? (
+      <div
+        style={{
+          color: '#7fa6c9',
+          fontSize: '14px',
+        }}
+      >
+        Caricamento meteo...
+      </div>
+    ) : (
+      <>
+        <div style={{ fontSize: '18px', marginBottom: '7px' }}>
+          🌡 {weatherInfo.temperature ?? '--'} °C
+        </div>
+
+        <div style={{ fontSize: '15px', marginBottom: '7px' }}>
+          💧 Umidità {weatherInfo.humidity ?? '--'}%
+        </div>
+
+        <div style={{ fontSize: '15px' }}>
+          💨 Vento {weatherInfo.windSpeed ?? '--'} km/h
+        </div>
+      </>
+    )}
+  </div>
+)}
         </>
       )}
     </div>
