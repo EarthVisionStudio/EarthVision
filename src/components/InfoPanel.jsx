@@ -34,6 +34,7 @@ function InfoPanel({
   formatLongitude,
   timeInfo,
   weatherInfo,
+  sunInfo,
 }) {
   return (
     <div
@@ -255,6 +256,36 @@ function InfoPanel({
     )}
   </div>
 )}
+
+{sunInfo && (sunInfo.sunrise || sunInfo.sunset) && (
+  <div
+    style={{
+      marginTop: '22px',
+      paddingTop: '16px',
+      borderTop: '1px solid rgba(116,188,255,.16)',
+    }}
+  >
+    <div
+      style={{
+        fontSize: '11px',
+        color: '#7fa6c9',
+        letterSpacing: '1.5px',
+        marginBottom: '10px',
+      }}
+    >
+      SOLE
+    </div>
+
+    <div style={{ fontSize: '15px', marginBottom: '7px' }}>
+      🌅 Alba {sunInfo.sunrise ? sunInfo.sunrise.slice(11, 16) : '--:--'}
+    </div>
+
+    <div style={{ fontSize: '15px' }}>
+      🌇 Tramonto {sunInfo.sunset ? sunInfo.sunset.slice(11, 16) : '--:--'}
+    </div>
+  </div>
+)}
+
         </>
       )}
     </div>

@@ -38,6 +38,11 @@ const [weatherInfo, setWeatherInfo] = useState({
   loading: false,
 })
 
+const [sunInfo, setSunInfo] = useState({
+  sunrise: '',
+  sunset: '',
+})
+
 useEffect(() => {
   if (!timeInfo.timezoneId) return
 
@@ -321,6 +326,33 @@ useEffect(() => {
   }
 }
 
+const findSunTimes = async (lat, lng) => {
+  try {
+    const response = await fetch(
+      `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&daily=sunrise,sunset&timezone=auto`
+    )
+
+    if (!response.ok) {
+      throw new Error('Errore alba/tramonto')
+    }
+
+    const data = await response.json()
+
+    const sunrise = data.daily?.sunrise?.[0] ?? ''
+    const sunset = data.daily?.sunset?.[0] ?? ''
+
+    setSunInfo({
+      sunrise,
+      sunset,
+    })
+  } catch (error) {
+    setSunInfo({
+      sunrise: '',
+      sunset: '',
+    })
+  }
+}
+
   const handleGlobeClick = ({ lat, lng }) => {
     if (!globeRef.current) return
 
@@ -343,6 +375,7 @@ useEffect(() => {
     findLocation(point.lat, point.lng)
     findLocalTime(point.lat, point.lng)
     findWeather(point.lat, point.lng)
+    findSunTimes(point.lat, point.lng)
 
     globeRef.current.pointOfView(
       {
@@ -398,6 +431,7 @@ useEffect(() => {
         formatLongitude={formatLongitude}
         timeInfo={timeInfo}
         weatherInfo={weatherInfo}
+        sunInfo={sunInfo}
       />
 
       <Globe
