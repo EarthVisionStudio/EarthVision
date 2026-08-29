@@ -1,3 +1,31 @@
+const getWeatherDescription = (code) => {
+  const weatherCodes = {
+    0: ['☀️', 'Sereno'],
+    1: ['🌤️', 'Prevalentemente sereno'],
+    2: ['⛅', 'Parzialmente nuvoloso'],
+    3: ['☁️', 'Nuvoloso'],
+    45: ['🌫️', 'Nebbia'],
+    48: ['🌫️', 'Nebbia con brina'],
+    51: ['🌦️', 'Pioviggine leggera'],
+    53: ['🌦️', 'Pioviggine'],
+    55: ['🌧️', 'Pioviggine intensa'],
+    61: ['🌧️', 'Pioggia leggera'],
+    63: ['🌧️', 'Pioggia'],
+    65: ['🌧️', 'Pioggia intensa'],
+    71: ['🌨️', 'Neve leggera'],
+    73: ['🌨️', 'Neve'],
+    75: ['❄️', 'Neve intensa'],
+    80: ['🌦️', 'Rovesci leggeri'],
+    81: ['🌧️', 'Rovesci'],
+    82: ['🌧️', 'Rovesci intensi'],
+    95: ['⛈️', 'Temporale'],
+    96: ['⛈️', 'Temporale con grandine'],
+    99: ['⛈️', 'Temporale forte con grandine'],
+  }
+
+  return weatherCodes[code] || ['🌍', 'Condizioni non disponibili']
+}
+
 function InfoPanel({
   panelVisible,
   locationInfo,
@@ -201,6 +229,17 @@ function InfoPanel({
       </div>
     ) : (
       <>
+      <div
+  style={{
+    fontSize: '17px',
+    fontWeight: '600',
+    marginBottom: '12px',
+  }}
+>
+  {getWeatherDescription(weatherInfo.weatherCode)[0]}{' '}
+  {getWeatherDescription(weatherInfo.weatherCode)[1]}
+</div>
+
         <div style={{ fontSize: '18px', marginBottom: '7px' }}>
           🌡 {weatherInfo.temperature ?? '--'} °C
         </div>
