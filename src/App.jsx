@@ -381,7 +381,7 @@ const findSunTimes = async (lat, lng) => {
       {
         lat: point.lat,
         lng: point.lng,
-        altitude: 1.35,
+        altitude: 0.75,
       },
       1000
     )
@@ -400,6 +400,15 @@ const findSunTimes = async (lat, lng) => {
         localTime: '',
         timezone: '',
       })
+
+      globeRef.current.pointOfView(
+  {
+    lat: 0,
+    lng: 0,
+    altitude: 2.5,
+  },
+  1000
+)
 
       controls.autoRotate = true
     }, 8000)
