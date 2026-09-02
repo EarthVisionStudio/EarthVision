@@ -1,13 +1,117 @@
 import { useEffect, useRef, useState } from 'react'
 import Globe from 'react-globe.gl'
+import * as THREE from 'three'
+import * as solar from 'solar-calculator'
 import './index.css'
 
 import Header from './components/Header'
 import InfoPanel from './components/InfoPanel'
 
+const DAY_TEXTURE =
+  'https://cdn.jsdelivr.net/npm/three-globe/example/img/earth-day.jpg'
+
+const NIGHT_TEXTURE =
+  'https://cdn.jsdelivr.net/npm/three-globe/example/img/earth-night.jpg'
+
+  const dayNightShader = {
+  vertexShader: `
+    varying vec3 vNormal;
+    varying vec2 vUv;
+
+    void main() {
+      vNormal = normalize(normalMatrix * normal);
+      vUv = uv;
+
+      gl_Position =
+        projectionMatrix *
+        modelViewMatrix *
+        vec4(position, 1.0);
+    }
+  `,
+
+  fragmentShader: `
+    #define PI 3.141592653589793
+
+    uniform sampler2D dayTexture;
+    uniform sampler2D nightTexture;
+    uniform vec2 sunPosition;
+    uniform vec2 globeRotation;
+
+    varying vec3 vNormal;
+    varying vec2 vUv;
+
+    float toRad(float value) {
+      return value * PI / 180.0;
+    }
+
+    vec3 polarToCartesian(vec2 coordinates) {
+      float theta = toRad(90.0 - coordinates.x);
+      float phi = toRad(90.0 - coordinates.y);
+
+      return vec3(
+        sin(phi) * cos(theta),
+        cos(phi),
+        sin(phi) * sin(theta)
+      );
+    }
+
+    void main() {
+      float invLon = toRad(globeRotation.x);
+      float invLat = -toRad(globeRotation.y);
+
+      mat3 rotX = mat3(
+        1, 0, 0,
+        0, cos(invLat), -sin(invLat),
+        0, sin(invLat), cos(invLat)
+      );
+
+      mat3 rotY = mat3(
+        cos(invLon), 0, sin(invLon),
+        0, 1, 0,
+        -sin(invLon), 0, cos(invLon)
+      );
+
+      vec3 sunDirection =
+        rotX *
+        rotY *
+        polarToCartesian(sunPosition);
+
+      float intensity =
+        dot(normalize(vNormal), normalize(sunDirection));
+
+      vec4 dayColor =
+        texture2D(dayTexture, vUv);
+
+      vec4 nightColor =
+        texture2D(nightTexture, vUv);
+
+      float blendFactor =
+        smoothstep(-0.1, 0.1, intensity);
+
+      gl_FragColor =
+        mix(nightColor, dayColor, blendFactor);
+    }
+  `,
+}
+
+const sunPosAt = (date) => {
+  const day = new Date(+date).setUTCHours(0, 0, 0, 0)
+  const t = solar.century(date)
+
+  const longitude =
+    ((day - date) / 864e5) * 360 - 180
+
+  return [
+    longitude - solar.equationOfTime(t) / 4,
+    solar.declination(t),
+  ]
+}
+
 function App() {
   const globeRef = useRef()
   const restartTimerRef = useRef(null)
+
+  const [globeMaterial, setGlobeMaterial] = useState(null)
 
   const locationRequestRef = useRef(null)
   const locationRequestIdRef = useRef(0)
@@ -72,6 +176,36 @@ useEffect(() => {
     if (!globeRef.current) return
 
     const controls = globeRef.current.controls()
+
+    const scene = globeRef.current.scene()
+    const textureLoader = new THREE.TextureLoader()
+
+const dayTexture = textureLoader.load(DAY_TEXTURE)
+const nightTexture = textureLoader.load(NIGHT_TEXTURE)
+
+const material = new THREE.ShaderMaterial({
+  uniforms: {
+    dayTexture: { value: dayTexture },
+    nightTexture: { value: nightTexture },
+    sunPosition: {
+      value: new THREE.Vector2(...sunPosAt(new Date())),
+    },
+    globeRotation: {
+      value: new THREE.Vector2(0, 0),
+    },
+  },
+  vertexShader: dayNightShader.vertexShader,
+  fragmentShader: dayNightShader.fragmentShader,
+})
+
+setGlobeMaterial(material)
+
+const ambientLight = new THREE.AmbientLight(0xffffff, 0.5)
+scene.add(ambientLight)
+
+const sunLight = new THREE.DirectionalLight(0xffffff, 2.2)
+sunLight.position.set(-5, 2, 5)
+scene.add(sunLight)
 
     controls.autoRotate = true
     controls.autoRotateSpeed = 0.35
@@ -443,14 +577,16 @@ const findSunTimes = async (lat, lng) => {
         sunInfo={sunInfo}
       />
 
+<div className="stars-background" />
+
       <Globe
         ref={globeRef}
         width={window.innerWidth}
         height={window.innerHeight}
-        backgroundColor="#020811"
-        globeImageUrl="https://unpkg.com/three-globe/example/img/earth-night.jpg"
+        backgroundColor="rgba(0,0,0,0)"
+        globeMaterial={globeMaterial || undefined}
         atmosphereColor="#3a9dff"
-        atmosphereAltitude={0.18}
+        atmosphereAltitude={0.16}
         onGlobeClick={handleGlobeClick}
         pointsData={markerData}
         pointLat="lat"
