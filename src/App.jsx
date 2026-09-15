@@ -200,6 +200,16 @@ const material = new THREE.ShaderMaterial({
 
 setGlobeMaterial(material)
 
+const updateGlobeRotation = () => {
+  const camera = globeRef.current.camera()
+  const { lng, lat } = globeRef.current.toGeoCoords(camera.position)
+
+  material.uniforms.globeRotation.value.set(lng, lat)
+}
+
+updateGlobeRotation()
+controls.addEventListener('change', updateGlobeRotation)
+
 const ambientLight = new THREE.AmbientLight(0xffffff, 0.5)
 scene.add(ambientLight)
 
@@ -248,7 +258,15 @@ scene.add(sunLight)
     controls.addEventListener('start', stopRotation)
     controls.addEventListener('end', returnToExploreMode)
 
+    const sunTimer = setInterval(() => {
+  material.uniforms.sunPosition.value.set(
+    ...sunPosAt(new Date())
+  )
+}, 60000)
+
     return () => {
+      clearInterval(sunTimer)
+      controls.removeEventListener('change', updateGlobeRotation)
       controls.removeEventListener('start', stopRotation)
       controls.removeEventListener('end', returnToExploreMode)
 
