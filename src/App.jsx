@@ -89,7 +89,7 @@ const NIGHT_TEXTURE =
         smoothstep(-0.1, 0.1, intensity);
 
       gl_FragColor =
-        mix(nightColor, dayColor, blendFactor);
+  mix(nightColor, dayColor * 1.06, blendFactor);
     }
   `,
 }
