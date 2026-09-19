@@ -7,8 +7,7 @@ import './index.css'
 import Header from './components/Header'
 import InfoPanel from './components/InfoPanel'
 
-const DAY_TEXTURE =
-  'https://cdn.jsdelivr.net/npm/three-globe/example/img/earth-day.jpg'
+const DAY_TEXTURE = '/earth-day-5400-bathy.jpg'
 
 const NIGHT_TEXTURE =
   'https://cdn.jsdelivr.net/npm/three-globe/example/img/earth-night.jpg'
@@ -89,7 +88,7 @@ const NIGHT_TEXTURE =
         smoothstep(-0.1, 0.1, intensity);
 
       gl_FragColor =
-  mix(nightColor, dayColor * 1.06, blendFactor);
+  mix(nightColor, dayColor * 0.94, blendFactor);
     }
   `,
 }
